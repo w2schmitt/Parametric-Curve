@@ -7,33 +7,34 @@
 
 //#include <cstdlib>
 #include <iostream>
+#include <GL/glew.h>
 #include <GL/glut.h>
 
+#include "callbacks.h"
+#include "utility.h"
+#include "Bezier.h"
 
-void renderScene(void) {
+// =================== GLOBALS ================================ //
+std::vector< Point > userPoints;
+Bezier bezierSpline;
 
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	glBegin(GL_TRIANGLES);
-		glVertex3f(-0.5,-0.5,0.0);
-		glVertex3f(0.5,0.0,0.0);
-		glVertex3f(0.0,0.5,0.0);
-	glEnd();
-
-	glutSwapBuffers();
-}
 
 
 int main(int argc, char **argv){
 	
 	glutInit(&argc, argv);
+        glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
 	glutInitWindowPosition(100,100);
 	glutInitWindowSize(320,320);
 	glutCreateWindow("Parametric Curve");
 	
+        glewInit();
 	glutDisplayFunc(renderScene);
-	
+	glutReshapeFunc(reshape);
+
+        init();
 	glutMainLoop();
-	std::cout << "feito\n";
+        
+
 	return 0;
 }

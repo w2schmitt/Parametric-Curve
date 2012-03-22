@@ -1,0 +1,24 @@
+Curva de Bezier;
+
+x(t) = (1-t)*x0 + 3*(1-t)^2*t*x1 + 3*(1-t)*t*t*x2 + t*t*t*x3, t in [0,1]
+y(t) = (1-t)*y0 + 3*(1-t)^2*t*y1 + 3*(1-t)*t*t*y2 + t*t*t*y3, t in [0,1]
+
+achar a distância entre os dois pontos P(a,b) e P(x(t),y(t),z(t)).
+
+D(t)^2 = (x(t)-a)^2 + (y(t)-b)^2
+
+temos que achar o ponto t que minimize D^2. Isso pode ser feito achando os pontos críticos de D'(t)^2 = 0.
+Então os pontos críticos são testados na função e é visto qual o menor valor.
+
+D(t_critico) = valor1
+D(t_critico2) = valor2 
+
+
+
+
+
+
+
+
+
+

@@ -4,10 +4,15 @@
     <logicalFolder name="HeaderFiles"
                    displayName="Arquivos de cabeçalho"
                    projectFiles="true">
+      <itemPath>Bezier.h</itemPath>
+      <itemPath>callbacks.h</itemPath>
+      <itemPath>utility.h</itemPath>
     </logicalFolder>
     <logicalFolder name="SourceFiles"
                    displayName="Arquivos de código-fonte"
                    projectFiles="true">
+      <itemPath>Bezier.cpp</itemPath>
+      <itemPath>callbacks.cpp</itemPath>
       <itemPath>main.cpp</itemPath>
     </logicalFolder>
     <logicalFolder name="ResourceFiles"
@@ -37,6 +42,8 @@
         <linkerTool>
           <linkerLibItems>
             <linkerLibLibItem>glut</linkerLibLibItem>
+            <linkerLibLibItem>GLEW</linkerLibLibItem>
+            <linkerLibLibItem>GLU</linkerLibLibItem>
           </linkerLibItems>
         </linkerTool>
       </compileType>
