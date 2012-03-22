@@ -1,4 +1,25 @@
-Curva de Bezier;
+Tutorial GIT:
+
+ * Criar usuário em http://github.com
+ * Seguir passos de instalação em http://help.github.com/set-up-git-redirect
+ * Executar os comandos a seguir:
+  $ git clone git://github.com/w2schmitt/Parametric-Curve.git
+  $ cd CppParametricCurve
+  $ git remote add origin git@github.com:w2schmitt/Parametric-Curve.git
+ * Para atualizar para a mais nova versão:
+  $ git pull
+ * Para adicionar um novo arquivo:
+  $ touch arquivo
+  $ git add arquivo
+ * Quando tiver realizado alterações e decidir mantê-las:
+  $ make clean
+  $ git commit -a -m "breve descrição das suas modificações"
+ Para enviar as mudanças ao servidor:
+  $ git push --all origin
+ * O link para o projeto é: https://github.com/w2schmitt/Parametric-Curve
+
+
+Curva de Bezier; ---------------------------------------------------------------
 
 x(t) = (1-t)*x0 + 3*(1-t)^2*t*x1 + 3*(1-t)*t*t*x2 + t*t*t*x3, t in [0,1]
 y(t) = (1-t)*y0 + 3*(1-t)^2*t*y1 + 3*(1-t)*t*t*y2 + t*t*t*y3, t in [0,1]
