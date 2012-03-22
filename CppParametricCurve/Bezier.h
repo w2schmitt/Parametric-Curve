@@ -21,7 +21,8 @@ public:
     virtual ~Bezier();
     
     void setControlPoints(const std::vector<Point> &cPoints);
-    void computeBezierCurve();
+    bool checkPointCurveDistance(Point point, float minDistance);
+    
     
     //output
     const std::vector< Point >& getPlotFunc(){return plot;}
@@ -30,7 +31,7 @@ private:
     std::vector< Point >        controlPoints;
     std::vector< Point >        plot;
     
-   
+    void computeBezierCurve();
 
 };
 

@@ -17,5 +17,18 @@ struct Point {
     GLfloat x,y;
 };
 
+struct Window {
+    Window(int _x, int _y) : x(_x), y(_y){}        
+    GLuint id;
+    int x,y;
+};
+
+struct BoundingBox {
+    BoundingBox(float _l, float _r, float _u, float _b) :
+        left(_l), right(_r), up(_u), bottom(_b) {}
+    
+    float left,right, up, bottom;
+};
+
 #endif	/* UTILITY_H */
 

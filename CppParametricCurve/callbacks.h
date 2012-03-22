@@ -16,12 +16,18 @@
 #include "utility.h"
 #include "Bezier.h"
 
+extern Window win;
 extern std::vector< Point > userPoints;
 extern Bezier bezierSpline;
+
+extern Point ptMouseCoord;
+extern BoundingBox space2d;
+extern bool grabCurve;
 
 void init();
 void renderScene(void);
 void reshape(int w, int h);
+void mouseFunc(int button, int state, int x, int y);
 
 
 #endif	/* CALLBACKS_H */
