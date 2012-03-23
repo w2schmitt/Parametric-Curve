@@ -12,9 +12,9 @@ void init(){
     glLineWidth(2.0);
     grabCurve = false;
 
-    userPoints.push_back(Point(-2,-4));
-    userPoints.push_back(Point(-3,2));
-    userPoints.push_back(Point(2,5));
+    userPoints.push_back(Point(1,1));
+    userPoints.push_back(Point(-2,2));
+    userPoints.push_back(Point(4,3));
     userPoints.push_back(Point(8,8));
 
     bezierSpline.setControlPoints(userPoints);
@@ -29,14 +29,15 @@ void mouseFunc(int button, int state, int x, int y){
     }
     else if (button==GLUT_LEFT_BUTTON && state == GLUT_DOWN){
 
+        // convert point from screen coord. to opengl system coord.
         float pointX = (space2d.right- space2d.left)/(win.x/(float)x);
         float pointY = (space2d.bottom - space2d.up)/(win.y/(float)(win.y-y));
 
         pointX -= (space2d.right - space2d.left)/2.0;
         pointY -= (space2d.bottom - space2d.up)/2.0;
 
-        grabCurve = bezierSpline.checkPointCurveDistance( Point(pointX,pointY), 1.0);
-        //std::cout << "x: " << pointX << " y: " << pointY << "\n";
+        grabCurve = bezierSpline.checkPointCurveDistance( Point(pointX,pointY), 0.5);
+        std::cout << "x: " << pointX << " y: " << pointY << "\n";
         std::cout << grabCurve << "\n";
         
     }

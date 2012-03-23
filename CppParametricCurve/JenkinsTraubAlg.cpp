@@ -14,7 +14,7 @@ JenkinsTraubAlg::JenkinsTraubAlg(int _degree, const double _coef[]){
     if (!memcpy(op, _coef, sizeof(double)*(degree+1))){
         std::cout << "error allocation memory for coeficients.\n";
     }
-    std::cout << op[0] << "x^2 + " << op[1] << "x + " << op[2] << "\n";
+    //std::cout << op[0] << "x^2 + " << op[1] << "x + " << op[2] << "\n";
 }
 
 void JenkinsTraubAlg::computeRoots(){

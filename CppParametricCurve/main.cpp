@@ -13,7 +13,7 @@
 #include "callbacks.h"
 #include "utility.h"
 #include "Bezier.h"
-#include "JenkinsTraubAlg.h"
+//#include "JenkinsTraubAlg.h"
 
 // =================== GLOBALS ================================ //
 Window win = Window(320,320);
@@ -38,17 +38,6 @@ int main(int argc, char **argv){
 	glutReshapeFunc(reshape);
         glutMouseFunc(mouseFunc);
         
-        // ------- teste --- <<perfeito>>
-        /*
-        double coef[6] = {1, 2, 3, 4, 5, 6};
-        JenkinsTraubAlg jkalg(5, coef);
-        jkalg.computeRoots();
-        const double* rcoef = jkalg.getZerosR();
-        const double* icoef = jkalg.getZerosI();
-        
-        std::cout << "root: " << rcoef[0] << " + " << icoef[0] << "i\n";
-        std::cout << "root: " << rcoef[1] << " + " << icoef[1] << "i\n";
-        */
         init();
 	glutMainLoop();        
 

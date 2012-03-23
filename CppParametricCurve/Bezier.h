@@ -9,10 +9,12 @@
 #define	BEZIER_H
 
 #include "utility.h"
+#include "JenkinsTraubAlg.h"
 #include <iostream>
 #include <vector>
 #include <math.h>
 #include <GL/glut.h>
+#include <stdio.h>
 
 class Bezier {
 public:
@@ -31,7 +33,9 @@ private:
     std::vector< Point >        controlPoints;
     std::vector< Point >        plot;
     
+    
     void computeBezierCurve();
+    Point computeValueGivenT(double t);
 
 };
 
