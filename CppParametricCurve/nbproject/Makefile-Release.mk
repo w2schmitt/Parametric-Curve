@@ -35,6 +35,8 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 # Object Files
 OBJECTFILES= \
 	${OBJECTDIR}/main.o \
+	${OBJECTDIR}/JenkinsTraubAlg.o \
+	${OBJECTDIR}/JenkinsTraub.o \
 	${OBJECTDIR}/Bezier.o \
 	${OBJECTDIR}/callbacks.o
 
@@ -67,6 +69,16 @@ ${OBJECTDIR}/main.o: main.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.cc) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/main.o main.cpp
+
+${OBJECTDIR}/JenkinsTraubAlg.o: JenkinsTraubAlg.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/JenkinsTraubAlg.o JenkinsTraubAlg.cpp
+
+${OBJECTDIR}/JenkinsTraub.o: JenkinsTraub.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/JenkinsTraub.o JenkinsTraub.cpp
 
 ${OBJECTDIR}/Bezier.o: Bezier.cpp 
 	${MKDIR} -p ${OBJECTDIR}

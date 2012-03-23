@@ -5,6 +5,7 @@
                    displayName="Arquivos de cabeçalho"
                    projectFiles="true">
       <itemPath>Bezier.h</itemPath>
+      <itemPath>JenkinsTraubAlg.h</itemPath>
       <itemPath>callbacks.h</itemPath>
       <itemPath>utility.h</itemPath>
     </logicalFolder>
@@ -12,6 +13,8 @@
                    displayName="Arquivos de código-fonte"
                    projectFiles="true">
       <itemPath>Bezier.cpp</itemPath>
+      <itemPath>JenkinsTraub.cpp</itemPath>
+      <itemPath>JenkinsTraubAlg.cpp</itemPath>
       <itemPath>callbacks.cpp</itemPath>
       <itemPath>main.cpp</itemPath>
     </logicalFolder>
