@@ -22,7 +22,7 @@ Point ptMouseCoord;
 bool grabCurve;
 double minT;
 
-std::vector< Point > userPoints;
+//std::vector< Point > userPoints;
 Bezier bezierSpline;
 
 
@@ -39,6 +39,7 @@ int main(int argc, char **argv){
 	glutReshapeFunc(reshape);
         glutMouseFunc(mouseFunc);
         glutMotionFunc(motionFunc);
+        glutKeyboardFunc(keyboardFunc);
         
         init();
 	glutMainLoop();        

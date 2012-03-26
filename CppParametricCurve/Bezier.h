@@ -23,24 +23,31 @@ public:
     virtual ~Bezier();
     
     void setControlPoints(const std::vector<Point> &cPoints);
+    void insertControlPoint(Point cpoint);
     bool checkPointCurveDistance(Point point, float minDistance, double &min_t);
     void moveBezierCurve(double t, Point newPoint);
+    void incrementNumsteps(int inc) { numSteps+=inc;}
+    void removeControlPoint() { plot.clear();
+                                if (!controlPoints.empty()) 
+                                  controlPoints.erase(controlPoints.end()-1); };
+    
     
     //output
     const std::vector< Point >& getPlotFunc(){return plot;}
+    std::vector< Point >& getControlPoints(){return controlPoints;}
+    
 private:
     int                         numSteps;
     std::vector< Point >        controlPoints;
     std::vector< bool >         fixedControlPoints;
     std::vector< Point >        plot;
-    std::vector< Point >        weights;
+    //std::vector< Point >        weights;
     
     
     void computeBezierCurve();
     Point computeBezierCurveAtT(double t);
     void computeBezierBasis(double t, double basis[]);
-    
-
+    bool readyToDrawCurve();
 };
 
 #endif	/* BEZIER_H */

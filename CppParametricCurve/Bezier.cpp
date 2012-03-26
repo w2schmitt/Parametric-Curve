@@ -8,11 +8,11 @@
 #include "Bezier.h"
 
 Bezier::Bezier() {
-    numSteps = 25;
+    numSteps = 10;
     plot.reserve(numSteps);
     
     // initialize weights with 1's.
-    weights.assign(4,Point(0,0));
+    //weights.assign(4,Point(0,0));
     fixedControlPoints.assign(4,false);
     
     fixedControlPoints[0] = true;
@@ -28,7 +28,12 @@ Bezier::~Bezier() {
 }
 
 void Bezier::setControlPoints(const std::vector<Point> &cPoints){
-    controlPoints.assign(cPoints.begin(), cPoints.end());
+    //controlPoints.assign(cPoints.begin(), cPoints.end());
+    //computeBezierCurve();
+}
+
+void Bezier::insertControlPoint(Point cpoint){
+    controlPoints.push_back(cpoint);
     computeBezierCurve();
 }
 
@@ -45,18 +50,19 @@ void Bezier::moveBezierCurve(double t, Point newPoint){
         squaredBasisSum += fixedControlPoints[i]? 0 : pow(basis[i], 2);
     }
     
-    for (int i=1; i<3; ++i){
-            weights[i] = Point( delta.x*basis[i]/squaredBasisSum, 
-                                delta.y*basis[i]/squaredBasisSum);
-            controlPoints[i] = controlPoints[i] + weights[i];
+    for (int i=0; i<4; ++i){
+        if (!fixedControlPoints[i])
+            controlPoints[i] = controlPoints[i] + Point( delta.x*basis[i]/squaredBasisSum, 
+                                                         delta.y*basis[i]/squaredBasisSum);
     }
-    
-    
     
     computeBezierCurve();     
 }
 
 void Bezier::computeBezierCurve(){
+    if(!readyToDrawCurve())
+        return;
+    
     double basis[4];
     GLfloat x_t;
     GLfloat y_t;
@@ -74,11 +80,10 @@ void Bezier::computeBezierCurve(){
         
         plot.push_back(Point(x_t,y_t));
     }    
-    
-    //for (int i=0; i<plot.size(); ++i){
-    //    printf("plot[%d] = < %f , %f >\n", i, plot[i].x,plot[i].y);        
-    //}
-    //std::cout << "\n";
+}
+
+bool Bezier::readyToDrawCurve(){
+    return controlPoints.size() == 4;
 }
 
 Point Bezier::computeBezierCurveAtT(double t){
@@ -103,6 +108,9 @@ void Bezier::computeBezierBasis(double t, double basis[]){
 }
 
 bool Bezier::checkPointCurveDistance(Point point, float minDistance, double &min_t){
+    if (!readyToDrawCurve())
+        return false;
+    
     float m1 = point.x;
     float m2 = point.y;
     
