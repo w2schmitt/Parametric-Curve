@@ -18,13 +18,10 @@ struct Point {
     double DistanceSquared(Point p2){
         return pow(this->x - p2.x, 2) + pow(this->y - p2.y, 2);
     }
+    Point operator+(const Point r_point){
+        return Point(this->x+r_point.x, this->y+r_point.y);
+    }
     GLfloat x,y;
-};
-
-struct Window {
-    Window(int _x, int _y) : x(_x), y(_y){}        
-    GLuint id;
-    int x,y;
 };
 
 struct BoundingBox {
@@ -32,6 +29,18 @@ struct BoundingBox {
         left(_l), right(_r), up(_u), bottom(_b) {}
     
     float left,right, up, bottom;
+};
+
+struct Window {
+    Window(int _x, int _y) : x(_x), y(_y){}  
+    Point Screen2Point(BoundingBox b, int x, int y){
+        float pointX = (b.right- b.left)/(this->x/(float)x);
+        float pointY = (b.bottom - b.up)/(this->y/(float)(this->y-y));
+        return Point ( pointX - (b.right - b.left)/2.0, 
+                       pointY - (b.bottom - b.up)/2.0);
+    }
+    GLuint id;
+    int x,y;
 };
 
 #endif	/* UTILITY_H */

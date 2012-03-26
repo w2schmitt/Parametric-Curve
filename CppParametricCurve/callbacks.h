@@ -23,11 +23,13 @@ extern Bezier bezierSpline;
 extern Point ptMouseCoord;
 extern BoundingBox space2d;
 extern bool grabCurve;
+extern double minT;
 
 void init();
 void renderScene(void);
 void reshape(int w, int h);
 void mouseFunc(int button, int state, int x, int y);
+void motionFunc(int x, int y);
 
 
 #endif	/* CALLBACKS_H */

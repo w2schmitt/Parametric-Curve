@@ -8,8 +8,15 @@
 #include "Bezier.h"
 
 Bezier::Bezier() {
-    numSteps = 100;
+    numSteps = 25;
     plot.reserve(numSteps);
+    
+    // initialize weights with 1's.
+    weights.assign(4,Point(0,0));
+    fixedControlPoints.assign(4,false);
+    
+    fixedControlPoints[0] = true;
+    fixedControlPoints[3] = true;
     
 }
 
@@ -25,40 +32,77 @@ void Bezier::setControlPoints(const std::vector<Point> &cPoints){
     computeBezierCurve();
 }
 
-void Bezier::computeBezierCurve(){
+void Bezier::moveBezierCurve(double t, Point newPoint){
+    Point currentPoint = computeBezierCurveAtT(t);
+    Point delta(newPoint.x-currentPoint.x, newPoint.y-currentPoint.y);
     
+    double basis[4];    
+    computeBezierBasis(t, basis);
+    
+    double squaredBasisSum = 0; //pow(basis[0],2) + pow(basis[1],2) + pow(basis[2],2) + pow(basis[3],2);
+    
+    for (int i=0; i<fixedControlPoints.size(); ++i){
+        squaredBasisSum += fixedControlPoints[i]? 0 : pow(basis[i], 2);
+    }
+    
+    for (int i=1; i<3; ++i){
+            weights[i] = Point( delta.x*basis[i]/squaredBasisSum, 
+                                delta.y*basis[i]/squaredBasisSum);
+            controlPoints[i] = controlPoints[i] + weights[i];
+    }
+    
+    
+    
+    computeBezierCurve();     
+}
+
+void Bezier::computeBezierCurve(){
+    double basis[4];
+    GLfloat x_t;
+    GLfloat y_t;
+            
     plot.clear();
     
-    for (double t=0.0; t<1.0; t+=1.0/numSteps){
-        GLfloat x_t =   pow(1-t,3)*controlPoints[0].x + 
-                        3*pow((1-t),2)*t*controlPoints[1].x +
-                        3*(1-t)*t*t*controlPoints[2].x +
-                        t*t*t*controlPoints[3].x;
-        
-        GLfloat y_t =   pow(1-t,3)*controlPoints[0].y + 
-                        3*pow((1-t),2)*t*controlPoints[1].y +
-                        3*(1-t)*t*t*controlPoints[2].y +
-                        t*t*t*controlPoints[3].y;
+    for (double t=0.0; t<=1.0; t+=1.0/numSteps){            
+        computeBezierBasis(t, basis);
+        x_t=0; y_t=0;
+    
+        for (int j=0; j<4; j++){
+            x_t += basis[j]*controlPoints[j].x;
+            y_t += basis[j]*controlPoints[j].y;
+        }
         
         plot.push_back(Point(x_t,y_t));
     }    
+    
+    //for (int i=0; i<plot.size(); ++i){
+    //    printf("plot[%d] = < %f , %f >\n", i, plot[i].x,plot[i].y);        
+    //}
+    //std::cout << "\n";
 }
 
-Point Bezier::computeValueGivenT(double t){
-    double x_t =   pow(1-t,3)*controlPoints[0].x + 
-                   3*pow((1-t),2)*t*controlPoints[1].x +
-                   3*(1-t)*t*t*controlPoints[2].x +
-                   t*t*t*controlPoints[3].x;
+Point Bezier::computeBezierCurveAtT(double t){
+    double basis[4];
+    double x_t = 0;
+    double y_t = 0;
+    computeBezierBasis(t, basis);
     
-    double y_t =   pow(1-t,3)*controlPoints[0].y + 
-                   3*pow((1-t),2)*t*controlPoints[1].y +
-                   3*(1-t)*t*t*controlPoints[2].y +
-                   t*t*t*controlPoints[3].y;
+    for (int j=0; j<4; j++){
+        x_t += basis[j]*controlPoints[j].x;
+        y_t += basis[j]*controlPoints[j].y;
+    }
     
     return Point(x_t,y_t);
 }
 
-bool Bezier::checkPointCurveDistance(Point point, float minDistance){
+void Bezier::computeBezierBasis(double t, double basis[]){
+    basis[0] = pow(1-t,3);
+    basis[1] = 3*pow((1-t),2)*t;
+    basis[2] = 3*(1-t)*t*t;
+    basis[3] = t*t*t;
+}
+
+bool Bezier::checkPointCurveDistance(Point point, float minDistance, double &min_t){
     float m1 = point.x;
     float m2 = point.y;
     
@@ -95,8 +139,8 @@ bool Bezier::checkPointCurveDistance(Point point, float minDistance){
     int degree = 5;
     double coef[6] = {a,b,c,d,e,f};
     
-    std::cout << "polinomio:\n";
-    printf("%f %f %f %f %f %f\n", a,b,c,d,e,f);
+    //std::cout << "polinomio:\n";
+    //printf("%f %f %f %f %f %f\n", a,b,c,d,e,f);
     
     JenkinsTraubAlg jkAlg(degree,coef);
     jkAlg.computeRoots();
@@ -105,16 +149,18 @@ bool Bezier::checkPointCurveDistance(Point point, float minDistance){
  
     double dist = 1000;
     double value;
+    min_t = -1;
     for (int i=0; i<degree; i++){
         //curve is only valid for t in [0,1]
-        std::cout << "root: " << rcoef[i] << " + " << icoef[i] << "i\n";
+        //std::cout << "root: " << rcoef[i] << " + " << icoef[i] << "i\n";
         if (icoef[i]!=0 || rcoef[i]<0 || rcoef[i]>1) continue;
-        if ((value = computeValueGivenT(rcoef[i]).DistanceSquared(point)) < dist){
+        if ((value = computeBezierCurveAtT(rcoef[i]).DistanceSquared(point)) < dist){
             dist = value;
+            min_t = rcoef[i];
         }
     }
     
-    std::cout << "minDistance from curve is: " << dist << "\n\n";
+    //std::cout << "minDistance from curve is: " << dist << "\n\n";
     
     return dist < minDistance;
 }

@@ -16,10 +16,11 @@
 //#include "JenkinsTraubAlg.h"
 
 // =================== GLOBALS ================================ //
-Window win = Window(320,320);
+Window win = Window(600,600);
 BoundingBox space2d = BoundingBox(-10,10,-10,10);
 Point ptMouseCoord;
 bool grabCurve;
+double minT;
 
 std::vector< Point > userPoints;
 Bezier bezierSpline;
@@ -37,6 +38,7 @@ int main(int argc, char **argv){
 	glutDisplayFunc(renderScene);
 	glutReshapeFunc(reshape);
         glutMouseFunc(mouseFunc);
+        glutMotionFunc(motionFunc);
         
         init();
 	glutMainLoop();        
