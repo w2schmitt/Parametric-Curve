@@ -16,6 +16,7 @@
 #include <GL/glut.h>
 #include <stdio.h>
 
+
 class Bezier {
 public:
     Bezier();
@@ -30,6 +31,7 @@ public:
     void removeControlPoint() { plot.clear();
                                 if (!controlPoints.empty()) 
                                   controlPoints.erase(controlPoints.end()-1); };
+    void computeBezierCurve();
     
     
     //output
@@ -44,7 +46,7 @@ private:
     //std::vector< Point >        weights;
     
     
-    void computeBezierCurve();
+    
     Point computeBezierCurveAtT(double t);
     void computeBezierBasis(double t, double basis[]);
     bool readyToDrawCurve();

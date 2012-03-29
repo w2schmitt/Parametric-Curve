@@ -7,6 +7,8 @@
       <itemPath>Bezier.h</itemPath>
       <itemPath>JenkinsTraubAlg.h</itemPath>
       <itemPath>callbacks.h</itemPath>
+      <itemPath>customCurve.h</itemPath>
+      <itemPath>matrix.h</itemPath>
       <itemPath>utility.h</itemPath>
     </logicalFolder>
     <logicalFolder name="SourceFiles"
@@ -16,6 +18,7 @@
       <itemPath>JenkinsTraub.cpp</itemPath>
       <itemPath>JenkinsTraubAlg.cpp</itemPath>
       <itemPath>callbacks.cpp</itemPath>
+      <itemPath>customCurve.cpp</itemPath>
       <itemPath>main.cpp</itemPath>
     </logicalFolder>
     <logicalFolder name="ResourceFiles"
@@ -47,6 +50,7 @@
             <linkerLibLibItem>glut</linkerLibLibItem>
             <linkerLibLibItem>GLEW</linkerLibLibItem>
             <linkerLibLibItem>GLU</linkerLibLibItem>
+            <linkerLibLibItem>AntTweakBar</linkerLibLibItem>
           </linkerLibItems>
         </linkerTool>
       </compileType>
