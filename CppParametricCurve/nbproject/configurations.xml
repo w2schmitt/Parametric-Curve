@@ -73,6 +73,15 @@
         <asmTool>
           <developmentMode>5</developmentMode>
         </asmTool>
+        <linkerTool>
+          <linkerLibItems>
+            <linkerLibLibItem>AntTweakBar</linkerLibLibItem>
+            <linkerLibLibItem>glut</linkerLibLibItem>
+            <linkerLibLibItem>GL</linkerLibLibItem>
+            <linkerLibLibItem>GLEW</linkerLibLibItem>
+            <linkerLibLibItem>GLU</linkerLibLibItem>
+          </linkerLibItems>
+        </linkerTool>
       </compileType>
     </conf>
   </confs>

@@ -34,8 +34,8 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
 OBJECTFILES= \
-	${OBJECTDIR}/customCurve.o \
 	${OBJECTDIR}/main.o \
+	${OBJECTDIR}/customCurve.o \
 	${OBJECTDIR}/JenkinsTraubAlg.o \
 	${OBJECTDIR}/JenkinsTraub.o \
 	${OBJECTDIR}/Bezier.o \
@@ -56,7 +56,7 @@ FFLAGS=
 ASFLAGS=
 
 # Link Libraries and Options
-LDLIBSOPTIONS=
+LDLIBSOPTIONS=-lAntTweakBar -lglut -lGL -lGLEW -lGLU
 
 # Build Targets
 .build-conf: ${BUILD_SUBPROJECTS}
@@ -66,15 +66,15 @@ ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/cppparametriccurve: ${OBJECTFILES}
 	${MKDIR} -p ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}
 	${LINK.cc} -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/cppparametriccurve ${OBJECTFILES} ${LDLIBSOPTIONS} 
 
-${OBJECTDIR}/customCurve.o: customCurve.cpp 
-	${MKDIR} -p ${OBJECTDIR}
-	${RM} $@.d
-	$(COMPILE.cc) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/customCurve.o customCurve.cpp
-
 ${OBJECTDIR}/main.o: main.cpp 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.cc) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/main.o main.cpp
+
+${OBJECTDIR}/customCurve.o: customCurve.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/customCurve.o customCurve.cpp
 
 ${OBJECTDIR}/JenkinsTraubAlg.o: JenkinsTraubAlg.cpp 
 	${MKDIR} -p ${OBJECTDIR}

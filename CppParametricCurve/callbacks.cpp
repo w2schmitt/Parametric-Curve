@@ -9,25 +9,8 @@
 #include "Bezier.h"
 
 void init(){    
-    //glLineWidth(2.0);
-    //glPointSize(2.0);
     minT = 0;
     grabCurve = false;
-    
-    userBasis.setBasis(0,1,0,1);
-    userBasis.setPointTypes(PT_POINT, PT_POINT, PT_TANGENT, PT_TANGENT);
-    
-    paramCurve.createBasis(userBasis);
-    paramCurve.printMatrix();
-
-    
-    //userBasis = Basis(0,0.25, 0.75, 1);
-    //userPoints.push_back(Point(-5,-2));
-    //userPoints.push_back(Point(-2,2));
-    //userPoints.push_back(Point(4,3));
-    //userPoints.push_back(Point(8,8));
-
-    //bezierSpline.setControlPoints(userPoints);
 }
 
 void mouseFunc(int button, int state, int x, int y){
@@ -36,30 +19,28 @@ void mouseFunc(int button, int state, int x, int y){
         // If mouse button was released, then release the curve
         if (button==GLUT_LEFT_BUTTON && state == GLUT_UP){
             grabCurve = false;
+            for (int i=0; i<4; i++) grabPoint[i]=false;
         }
         else if (button==GLUT_LEFT_BUTTON && state == GLUT_DOWN){
 
             Point userPoint = win.Screen2Point(space2d,x,y);
-            std::cout << "userPoint: (" << userPoint.x << " , " << userPoint.y << ")\n";
+            
             if (!paramCurve.insertControlPoint(userPoint))
             {
-                
-            }
-/*
-            if (paramCurve.getControlPoints().size() < 4){
-                paramCurve.insertControlPoint(userPoint);
-            }
-            else{
-
-                // check if user clicked at the curve
-                grabCurve = bezierSpline.checkPointCurveDistance( userPoint, 0.5, minT);
-
-                if (!grabCurve){
-                    for (int i=0; i<bezierSpline.getControlPoints().size(); i++)
-                    grabPoint[i] = userPoint.Distance(bezierSpline.getControlPoints().at(i)) < 0.5;
+                //test for grab curve
+                if (paramCurve.computeMinDistanceFromPointToCurve(userPoint, minT) < SPACE_SIZE*0.5){
+                    grabCurve = true;
                 }
-            }  
- */      
+                else{
+                    //test for grab control points
+                    for (int i=0; i < paramCurve.getControlPoints().size(); i++)
+                        if (userPoint.Distance(paramCurve.getControlPoints().at(i)) < SPACE_SIZE*0.5/10.){
+                            grabPoint[i] = true;
+                            grabCurve = false;
+                        }
+                }
+            }
+            
         }
     }
 }
@@ -71,15 +52,16 @@ void motionFunc(int x, int y){
         Point userPoint = win.Screen2Point(space2d,x,y);  
 
         if (grabCurve){        
-            //bezierSpline.moveBezierCurve(minT, userPoint);        
+            //std::cout << "tmin: "<< minT << "\n";
+            paramCurve.moveCurve(minT, userPoint);        
         }
         else {
-            //for (int i=0; i<bezierSpline.getControlPoints().size(); i++){
-            //    if (grabPoint[i]){
-            //        bezierSpline.getControlPoints().at(i) = userPoint;
-            //        bezierSpline.computeBezierCurve();
-            //    }
-            //}        
+            for (int i=0; i<paramCurve.getControlPoints().size(); i++){
+                if (grabPoint[i]){
+                    paramCurve.insertControlPointAt(userPoint,i);
+                    //paramCurve.computeBezierCurve();
+                }
+            }        
         }
         //glutPostRedisplay(); 
     }
@@ -87,25 +69,12 @@ void motionFunc(int x, int y){
 
 void keyboardFunc(unsigned char key, int x, int y){
     
-    if (!TwEventKeyboardGLUT(key,x,y)){
-        if (key=='d' || key=='D'){
-            //bezierSpline.removeControlPoint();
-        }
-        if (key=='=' || key=='+')
-            //std::cout << "testre\n";
-            //bezierSpline.incrementNumsteps(2);
-        if (key=='-' || key=='-') 
-            //std::cout << "testre\n";
-            //bezierSpline.incrementNumsteps(-2);
-        if (key=='Q' || key=='q'){
-            std::cout << "Program terminated by the user.\n";
-            exit(0);
-        }
-        
-        //bezierSpline.computeBezierCurve();
-        //glutPostRedisplay(); 
-    }     
-   
+   if (key=='Q' || key=='q' || key==KEY_SCAPE){
+        std::cout << "Program terminated by the user.\n";
+        exit(0);
+    }
+            
+    TwEventKeyboardGLUT(key,x,y);
 }
 
 
@@ -113,10 +82,14 @@ void reshape(int w, int h){
     // Prevent a divide by zero, when window is too short
     // (you cant make a window of zero width).
     if(h == 0) h = 1;
-    float ratio = 1.0* w / h;
     
+    float ratio =  w / (float)h;
+
     win.x = w;
     win.y = h;
+    
+    space2d.left  = -SPACE_SIZE*ratio;
+    space2d.right = SPACE_SIZE*ratio;
 
     // Use the Projection Matrix
     glMatrixMode(GL_PROJECTION);
@@ -141,12 +114,11 @@ void renderScene(void) {
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    //std::vector< Point> points(customCurve.getPlotFunc().begin(), customCurve.getPlotFunc().end()); 
     const std::vector<Point> &points = paramCurve.getPlotFunc();
     std::vector<Point>::const_iterator it = points.begin();
     std::vector<Point>::const_iterator end = points.end();
 
-    glLineWidth(0.5);
+    glLineWidth(0.7);
     drawAxis();
     drawControlPoints();
 
@@ -157,7 +129,7 @@ void renderScene(void) {
             glVertex2f(it->x, it->y);
         }
     glEnd();
-       
+      
     TwDraw();
 
     glutSwapBuffers();
@@ -168,11 +140,11 @@ void renderScene(void) {
 
 void drawControlPoints(){
     std::vector<Point> userPoints = paramCurve.getControlPoints();
-    //std::cout << userPoints.size() << "\n";
+
     glColor3f(1,0.2, 0.2);
     for (int i=0; i<userPoints.size(); i++){
         glBegin(GL_LINE_LOOP);
-        drawCircle(0.15, userPoints[i]);
+        drawCircle(SPACE_SIZE*0.5/35, userPoints[i]);
         glEnd();
      }  
 }
@@ -199,29 +171,56 @@ void drawCircle(float r, Point center){
 }
 
 
+int terminate(void){    
+    TwTerminate();
+}
+
 void twGUI(TwBar *bar){
-    
-    TwDefine(" GLOBAL help='This example shows how to integrate AntTweakBar with GLUT and OpenGL.' "); // Message added to the help bar.
-    TwDefine(" TweakBar size='170 280' color='96 216 224' "); // change default tweak bar size and color
+
+    //TwDefine(" GLOBAL help='' "); // Message added to the help bar.
+    TwDefine(" TweakBar size='195 400' color='96 216 224' "); // change default tweak bar size and color
      
-    {
-        // ShapeEV associates Shape enum values with labels that will be displayed instead of enum values
-        TwEnumVal TypeEV[2] = { {PT_POINT, "POINT"}, {PT_TANGENT, "TANGENT"} };
-        // Create a type for the enum TypeEV
-        TwType PointType = TwDefineEnum("PointType", TypeEV, 2);
-        // add 'g_CurrentShape' to 'bar': this is a variable of type ShapeType. Its key shortcuts are [<] and [>].
-        TwAddVarRW(bar, "p1 type", PointType, userBasis.p_or_t, "group='User Basis Conditions'");
-        TwAddVarRW(bar, "p2 type", PointType, userBasis.p_or_t+1, "group='User Basis Conditions'");
-        TwAddVarRW(bar, "p3 type", PointType, userBasis.p_or_t+2, "group='User Basis Conditions'");
-        TwAddVarRW(bar, "p4 type", PointType, userBasis.p_or_t+3, "group='User Basis Conditions'");
-    }
+    TwAddButton(bar, "separator1", NULL, NULL, " label='Point or Tangent' group='Curve Config' ");
+         
+    TwAddVarRW(bar, "p1type", TW_TYPE_BOOLCPP, paramCurve.basis.p_or_t,"true='Point' false='Tangent' label='p1' group='Curve Config'");
+    TwAddVarRW(bar, "p2type", TW_TYPE_BOOLCPP, paramCurve.basis.p_or_t+1,"true='Point' false='Tangent' label='p2' group='Curve Config'");
+    TwAddVarRW(bar, "p3type", TW_TYPE_BOOLCPP, paramCurve.basis.p_or_t+2,"true='Point' false='Tangent' label='p3' group='Curve Config'");
+    TwAddVarRW(bar, "p4type", TW_TYPE_BOOLCPP, paramCurve.basis.p_or_t+3,"true='Point' false='Tangent' label='p4' group='Curve Config'");
     
-    TwAddSeparator(bar,"","group='User Basis Conditions'");
-            
-    TwAddVarRW(bar, "p1 val", TW_TYPE_FLOAT, userBasis.coef,"min=0 max=1 step=0.05 group='User Basis Conditions'");
-    TwAddVarRW(bar, "p2 val", TW_TYPE_FLOAT, userBasis.coef+1,"min=0 max=1 step=0.05 group='User Basis Conditions'");
-    TwAddVarRW(bar, "p3 val", TW_TYPE_FLOAT, userBasis.coef+2,"min=0 max=1 step=0.05 group='User Basis Conditions'");
-    TwAddVarRW(bar, "p4 val", TW_TYPE_FLOAT, userBasis.coef+3,"min=0 max=1 step=0.05 group='User Basis Conditions'");
+    TwAddButton(bar, "separator2", NULL, NULL, " label='Set Values' group='Curve Config' ");
     
+    TwAddVarRW(bar, "p1val", TW_TYPE_FLOAT, paramCurve.basis.coef,"min=0 max=1 step=0.05 label='p1' group='Curve Config'");
+    TwAddVarRW(bar, "p2val", TW_TYPE_FLOAT, paramCurve.basis.coef+1,"min=0 max=1 step=0.05 label='p2' group='Curve Config'");
+    TwAddVarRW(bar, "p3val", TW_TYPE_FLOAT, paramCurve.basis.coef+2,"min=0 max=1 step=0.05 label='p3' group='Curve Config'");
+    TwAddVarRW(bar, "p4val", TW_TYPE_FLOAT, paramCurve.basis.coef+3,"min=0 max=1 step=0.05 label='p4' group='Curve Config'");
+
+    TwAddButton(bar, "separator3", NULL, NULL, " label='Fix/Unfix Points' group='Curve Config' ");
     
+    TwAddVarRW(bar, "p1fix", TW_TYPE_BOOLCPP, paramCurve.basis.fixed,"true='locked' false='free' label='p1' group='Curve Config'");
+    TwAddVarRW(bar, "p2fix", TW_TYPE_BOOLCPP, paramCurve.basis.fixed+1,"true='locked' false='free' label='p2' group='Curve Config'");
+    TwAddVarRW(bar, "p3fix", TW_TYPE_BOOLCPP, paramCurve.basis.fixed+2,"true='locked' false='free' label='p3' group='Curve Config'");
+    TwAddVarRW(bar, "p4fix", TW_TYPE_BOOLCPP, paramCurve.basis.fixed+3,"true='locked' false='free' label='p4' group='Curve Config'");
+    
+    TwAddVarRO(bar,"Determinant",TW_TYPE_DOUBLE, &(paramCurve.determinant) , "group='Settings'");
+    TwAddVarCB(bar, "seg", TW_TYPE_INT16, customCurve::setNumberOfSegments,customCurve::getNumberOfSegments, &paramCurve,"min=2 max=100 step=2 keyincr='+' keydecr='-' label='Segments' group='Settings'");
+    
+    TwAddSeparator(bar,NULL,NULL);
+    TwAddButton(bar,"update", updateBasis, (void*)&paramCurve.basis, "label='Update Values'");
+    
+    TwAddSeparator(bar,NULL,NULL);   
+    
+    TwAddButton(bar,"remove", removeUserPoint, NULL, "label='Remove Last Point' key='d'");
+    TwAddButton(bar,"reset", resetCurve, NULL, "label='Reset All' key='x'");
+}
+
+void TW_CALL updateBasis(void* b){    
+    paramCurve.createBasis(*(Basis*)b);
+}
+
+void TW_CALL removeUserPoint(void*){
+    paramCurve.removeUserPoint();
+}
+
+void TW_CALL resetCurve(void*){
+    paramCurve.resetCurve();
 }

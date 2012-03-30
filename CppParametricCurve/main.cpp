@@ -5,7 +5,7 @@
  * Created on 21 de Março de 2012, 14:11
  */
 
-//#include <cstdlib>
+#include <cstdlib>
 #include <iostream>
 #include <GL/glew.h>
 #include <GL/glut.h>
@@ -13,19 +13,17 @@
 
 #include "callbacks.h"
 #include "utility.h"
-#include "Bezier.h"
 
 // =================== GLOBALS ================================ //
-Window win = Window(600,600);
-BoundingBox space2d = BoundingBox(-10,10,-10,10);
+Window win = Window(800,600);
+BoundingBox space2d = BoundingBox(-SPACE_SIZE*win.x/(float)win.y,SPACE_SIZE*win.x/(float)win.y,-SPACE_SIZE,SPACE_SIZE);
 Point ptMouseCoord;
-Basis userBasis;
 bool grabCurve;
 bool grabPoint[4];
 double minT;
 
 //std::vector< Point > userPoints;
-Bezier bezierSpline;
+//Bezier bezierSpline;
 customCurve paramCurve;
 
 
@@ -38,9 +36,10 @@ int main(int argc, char **argv){
 	glutInitWindowPosition(100,100);
 	glutInitWindowSize(win.x, win.y);
 	win.id = glutCreateWindow("Parametric Curve");
-        
-	TwInit(TW_OPENGL, NULL);
+        	
         glewInit();
+        TwInit(TW_OPENGL, NULL);
+        
 	glutDisplayFunc(renderScene);
 	glutReshapeFunc(reshape);
         glutMouseFunc(mouseFunc);
@@ -48,11 +47,13 @@ int main(int argc, char **argv){
         glutKeyboardFunc(keyboardFunc);
         glutPassiveMotionFunc((GLUTmousemotionfun)TwEventMouseMotionGLUT);
         
-        bar = TwNewBar("TweakBar");
-        twGUI(bar);
-
         init();
-	glutMainLoop();        
+        
+        bar = TwNewBar("TweakBar");        
+        twGUI(bar);
+        atexit(terminate);
+	
+        glutMainLoop();        
 
 	return 0;
 }

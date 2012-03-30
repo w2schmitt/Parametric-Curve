@@ -7,20 +7,47 @@
 
 #include "customCurve.h"
 
-customCurve::customCurve() {
-    matBasis = matrix<double>(4,4);
-    numSteps = 60;
-    plot.reserve(numSteps);
-    
-}
 
-customCurve::customCurve(const customCurve& orig) {
+customCurve::customCurve() {
+    determinant = 0;
+    numSteps = 10;
+    plot.reserve(numSteps);
+    controlPoints.clear();
+    
+    basis.setBasis(0,1,0,1);
+    basis.setPointTypes(true, true, false, false);
+    basis.setFixedPoints(true,true,false,false);
+    
+    createBasis(basis);
 }
 
 customCurve::~customCurve() {
 }
 
+void customCurve::resetCurve(){
+    determinant = 0;
+    numSteps = 10;
+    plot.clear();
+    plot.reserve(numSteps);
+    controlPoints.clear();
+    fixedControlPoints.clear();
+    
+    basis.setBasis(0,1,0,1);
+    basis.setPointTypes(true, true, false, false);
+    basis.setFixedPoints(true,true,false,false);
+    
+    createBasis(basis);
+}
+
+void customCurve::removeUserPoint(){
+    if (controlPoints.size()>0)
+        controlPoints.erase(controlPoints.end()-1);
+    plot.clear();
+}
+
 bool customCurve::insertControlPoint(Point p){
+    // inserted 4 control points --> compute curve
+    // inserted less than 4 control points do nothing.
     if (controlPoints.size() == 3){
         controlPoints.push_back(p);
         computeCurve();
@@ -34,27 +61,50 @@ bool customCurve::insertControlPoint(Point p){
     return false;
 }
 
+bool customCurve::insertControlPointAt(Point p, int i){
+    // replace a specific control point
+    if (i<=3 && i>=0){
+        controlPoints[i] = p;
+        if (controlPoints.size() == 4){
+            computeCurve();
+        }
+        return true;
+    }
+    return false;
+}
+
+
 void customCurve::createBasis(Basis b){
-    
+    matrix<double> matBasis(MSIZE,MSIZE);
+
+    fixedControlPoints.assign(b.fixed, b.fixed+4);
+            
     for (int i=0; i<matBasis.getactualsize(); ++i){
         switch(b.p_or_t[i]){
-            case PT_POINT: 
+            case true: 
                 for (int j=matBasis.getactualsize()-1; j>=0; --j){
                     //at^3 + bt^2 + ct + d
                     matBasis.setvalue(i,matBasis.getactualsize()-j-1, pow(b.coef[i], j)); 
                 }
                 break;
-            case PT_TANGENT:
+            case false:
                 for (int j=matBasis.getactualsize()-1; j>=0; --j){
-                    //3at^2 + 2bt + c
-                    
+                    //3at^2 + 2bt + c                    
                     matBasis.setvalue(i,matBasis.getactualsize()-j-1, j*pow(b.coef[i], (j-1)<0? 0:(j-1))); 
                 }
                 break;
         }
     }
     
-    matBasis.invert2();
+    determinant = matBasis.determinant();
+    
+    if (determinant==0){
+        plot.clear();
+        return;
+    }
+    
+    //invert matrix
+    matBasis.invert();
     
     bool ok;
    
@@ -68,56 +118,206 @@ void customCurve::createBasis(Basis b){
     matBasis.getvalue(2,2,a[10],ok); matBasis.getvalue(3,2,a[14],ok);
     matBasis.getvalue(2,3,a[11],ok); matBasis.getvalue(3,3,a[15],ok);
     
-    for (int i=0; i<16; i++)
-        if (a[i] < 0.0001 && a[i] > -0.0001)
-            a[i]=0;
+    double err = 0.0001;    
+    // set very small values to Zero  
+    for (int i=0; i<MSIZE*MSIZE; i++)
+        if ( abs(a[i]) < err) a[i]=0;
     
+    if (controlPoints.size()==4){
+        computeCurve();
+    }
+}
+
+
+
+void customCurve::moveCurve(double tmin, Point to){
     
-    for (int i=0; i<16 ; i++)
-        std:: cout <<a[i]<< " ";
-    std::cout << "\n";
+    Point from = computeCurvePointAt(tmin);
+    Point delta(to.x - from.x, to.y - from.y);
+
+    double basis[MSIZE];    
+    calcBasis(tmin, basis);
+    
+    double squaredBasisSum = 0;
+    
+    for (int i=0; i<fixedControlPoints.size(); ++i){
+        squaredBasisSum += fixedControlPoints[i]? 0 : pow(basis[i], 2);
+    }
+    
+    for (int i=0; i<fixedControlPoints.size(); ++i){
+        if (!fixedControlPoints[i])
+            controlPoints[i] = controlPoints[i] + Point( delta.x*basis[i]/squaredBasisSum, 
+                                                         delta.y*basis[i]/squaredBasisSum);
+    }
+    
+    computeCurve();
 }
 
 void customCurve::computeCurve(){
+    if (determinant==0) return;
+    Point p;
+    plot.clear();    
     
-    double x_t, y_t, c1,c2;
+    for (double t=0.0; t < 1.0; t+=1.0/numSteps){                 
+        p = computeCurvePointAt(t);   
+        plot.push_back(p);
+    }
+    p = computeCurvePointAt(1.0);   
+    plot.push_back(p);    
+}
+
+Point customCurve::computeCurvePointAt(double t){
     
-    for (double t=0.0; t<=1.0; t+=1.0/numSteps){            
-        //computeBezierBasis(t, basis);       
+    double xt=0 , yt=0;    
+    double basis[MSIZE];
     
-        x_t=0; y_t=0;
-        for (int i=0; i < matBasis.getactualsize(); ++i){
-            c1=0;c2=0;
-            for (int j=0; j<4; ++j){
-                c1 += a[j+i*matBasis.getactualsize()]*controlPoints[j].x;
-                c2 += a[j+i*matBasis.getactualsize()]*controlPoints[j].y;
-            }
-            //std::cout << "c1: " << c1 << "\n";
-            x_t += c1*pow(t,matBasis.getactualsize()-i-1);
-            y_t += c2*pow(t,matBasis.getactualsize()-i-1);        
+    calcBasis(t,basis);
+    
+    for (int j=0; j<MSIZE; j++){
+        xt += basis[j]*controlPoints[j].x;
+        yt += basis[j]*controlPoints[j].y;
+    }
+    
+    return Point(xt,yt);
+}
+
+void customCurve::calcBasis(double t, double basis[]){
+    double c;
+    
+    for (int i=0; i < MSIZE; ++i){
+        c=0;
+        for (int j=0; j<MSIZE; ++j){
+            c += a[j*MSIZE+i]*pow(t,MSIZE-j-1);
+        }
+        basis[i] = c;
+    }
+}
+
+
+double customCurve::computeMinDistanceFromPointToCurve(Point p, double& tmin){
+    
+    if (determinant==0) return 100000;
+    // arbitrary selected point
+    double mx = p.x, my = p.y;
+        
+    // control points    
+    double p1x = controlPoints[0].x, p1y = controlPoints[0].y;
+    double p2x = controlPoints[1].x, p2y = controlPoints[1].y;
+    double p3x = controlPoints[2].x, p3y = controlPoints[2].y;
+    double p4x = controlPoints[3].x, p4y = controlPoints[3].y;
+    
+    // X coeficients
+    double x[16] = { p1x*a[0], p1x*a[4], p1x*a[8 ], p1x*a[12], 
+                     p2x*a[1], p2x*a[5], p2x*a[9 ], p2x*a[13],
+                     p3x*a[2], p3x*a[6], p3x*a[10], p3x*a[14],
+                     p4x*a[3], p4x*a[7], p4x*a[11], p4x*a[15] };
+    
+    // Y coeficients
+    double y[16] = { p1y*a[0], p1y*a[4], p1y*a[8 ], p1y*a[12], 
+                     p2y*a[1], p2y*a[5], p2y*a[9 ], p2y*a[13],
+                     p3y*a[2], p3y*a[6], p3y*a[10], p3y*a[14],
+                     p4y*a[3], p4y*a[7], p4y*a[11], p4y*a[15] };
+    
+    
+    // Polynomium: D'(t) = d/dt( [x(t) - mx]^2 + [y(t) - mx]^2);
+    
+    double a =  6*(x[8]*x[8] + x[0]*x[0] +x[4]*x[4] + x[12]*x[12] + 2*x[8]*x[0] + 2*x[8]*x[4] + 2*x[0]*x[4] + 
+                2*x[8]*x[12] + 2*x[0]*x[12] +2*x[4]*x[12]);
+    a +=        6*(y[8]*y[8] + y[0]*y[0] +y[4]*y[4] + y[12]*y[12] + 2*y[8]*y[0] + 2*y[8]*y[4] + 2*y[0]*y[4] + 
+                2*y[8]*y[12] + 2*y[0]*y[12] +2*y[4]*y[12]);
+    
+    double b =  5*(2*x[8]*x[9] + 2*x[9]*x[0] + 2*x[8]*x[1] + 2*x[0]*x[1] + 2*x[9]*x[4] + 2*x[1]*x[4] + 
+                2*x[8]*x[5] + 2*x[0]*x[5] + 2*x[4]*x[5] +2*x[9]*x[12] + 2*x[1]*x[12] + 2*x[5]*x[12] + 
+                2*x[8]*x[13] + 2*x[0]*x[13] + 2*x[4]*x[13] + 2*x[12]*x[13]);
+    
+    b +=        5*(2*y[8]*y[9] + 2*y[9]*y[0] + 2*y[8]*y[1] + 2*y[0]*y[1] + 2*y[9]*y[4] + 2*y[1]*y[4] + 
+                2*y[8]*y[5] + 2*y[0]*y[5] + 2*y[4]*y[5] +2*y[9]*y[12] + 2*y[1]*y[12] + 2*y[5]*y[12] + 
+                2*y[8]*y[13] + 2*y[0]*y[13] + 2*y[4]*y[13] + 2*y[12]*y[13]);
+    
+    double c =  4*(x[9]*x[9] + x[1]*x[1] + x[5]*x[5] + x[13]*x[13] + 2*x[8]*x[10] + 2*x[10]*x[0] + 
+                2*x[9]*x[1] + 2*x[8]*x[2] + 2*x[0]*x[2] + 2*x[10]*x[4] + 2*x[2]*x[4] + 2*x[9]*x[5] + 
+                2*x[1]*x[5] + 2*x[8]*x[6] + 2*x[0]*x[6] + 2*x[4]*x[6] + 2*x[10]*x[12] + 2*x[2]*x[12] + 
+                2*x[6]*x[12] + 2*x[9]*x[13] + 2*x[1]*x[13] + 2*x[5]*x[13] + 2*x[8]*x[14] + 2*x[0]*x[14] + 
+                2*x[4]*x[14] + 2*x[12]*x[14] );
+    
+    c +=        4*(y[9]*y[9] + y[1]*y[1] + y[5]*y[5] + y[13]*y[13] + 2*y[8]*y[10] + 2*y[10]*y[0] + 
+                2*y[9]*y[1] + 2*y[8]*y[2] + 2*y[0]*y[2] + 2*y[10]*y[4] + 2*y[2]*y[4] + 2*y[9]*y[5] + 
+                2*y[1]*y[5] + 2*y[8]*y[6] + 2*y[0]*y[6] + 2*y[4]*y[6] + 2*y[10]*y[12] + 2*y[2]*y[12] + 
+                2*y[6]*y[12] + 2*y[9]*y[13] + 2*y[1]*y[13] + 2*y[5]*y[13] + 2*y[8]*y[14] + 2*y[0]*y[14] + 
+                2*y[4]*y[14] + 2*y[12]*y[14] );
+    
+    double d =  3*(2*x[9]*x[10] + 2*x[8]*x[11] - 2*x[8]*mx + 2*x[11]*x[0] - 2*mx*x[0] + 2*x[10]*x[1] + 
+                2*x[9]*x[2] + 2*x[1]*x[2] + 2*x[8]*x[3] + 2*x[0]*x[3] + 2*x[11]*x[4] - 2*mx*x[4] + 2*x[3]*x[4] + 
+                2*x[10]*x[5] + 2*x[2]*x[5] + 2*x[9]*x[6] + 2*x[1]*x[6] + 2*x[5]*x[6] + 2*x[8]*x[7] + 2*x[0]*x[7] + 
+                2*x[4]*x[7] + 2*x[11]*x[12] - 2*mx*x[12] + 2*x[3]*x[12] + 2*x[7]*x[12] + 2*x[10]*x[13] + 
+                2*x[2]*x[13] + 2*x[6]*x[13] + 2*x[9]*x[14] + 2*x[1]*x[14] + 2*x[5]*x[14] + 2*x[13]*x[14] + 
+                2*x[8]*x[15] + 2*x[0]*x[15] + 2*x[4]*x[15] + 2*x[12]*x[15]);
+
+    d +=        3*(2*y[9]*y[10] + 2*y[8]*y[11] - 2*y[8]*my + 2*y[11]*y[0] - 2*my*y[0] + 2*y[10]*y[1] + 
+                2*y[9]*y[2] + 2*y[1]*y[2] + 2*y[8]*y[3] + 2*y[0]*y[3] + 2*y[11]*y[4] - 2*my*y[4] + 2*y[3]*y[4] + 
+                2*y[10]*y[5] + 2*y[2]*y[5] + 2*y[9]*y[6] + 2*y[1]*y[6] + 2*y[5]*y[6] + 2*y[8]*y[7] + 2*y[0]*y[7] + 
+                2*y[4]*y[7] + 2*y[11]*y[12] - 2*my*y[12] + 2*y[3]*y[12] + 2*y[7]*y[12] + 2*y[10]*y[13] + 
+                2*y[2]*y[13] + 2*y[6]*y[13] + 2*y[9]*y[14] + 2*y[1]*y[14] + 2*y[5]*y[14] + 2*y[13]*y[14] + 
+                2*y[8]*y[15] + 2*y[0]*y[15] + 2*y[4]*y[15] + 2*y[12]*y[15]);
+    
+    double e =  2*(x[10]*x[10] + x[2]*x[2] + x[6]*x[6] + x[14]*x[14] + 2*x[9]*x[11] - 2*x[9]*mx + 2*x[11]*x[1] - 
+                2*mx*x[1] + 2*x[10]*x[2] + 2*x[9]*x[3] + 2*x[1]*x[3] + 2*x[11]*x[5] - 2*mx*x[5] + 2*x[3]*x[5] + 
+                2*x[10]*x[6] + 2*x[2]*x[6] + 2*x[9]*x[7] + 2*x[1]*x[7] + 2*x[5]*x[7] + 2*x[11]*x[13] - 2*mx*x[13] + 
+                2*x[3]*x[13] + 2*x[7]*x[13] + 2*x[10]*x[14] + 2*x[2]*x[14] + 2*x[6]*x[14] + 2*x[9]*x[15] + 
+                2*x[1]*x[15] + 2*x[5]*x[15] + 2*x[13]*x[15]);
+    
+    e +=        2*(y[10]*y[10] + y[2]*y[2] + y[6]*y[6] + y[14]*y[14] + 2*y[9]*y[11] - 2*y[9]*my + 2*y[11]*y[1] - 
+                2*my*y[1] + 2*y[10]*y[2] + 2*y[9]*y[3] + 2*y[1]*y[3] + 2*y[11]*y[5] - 2*my*y[5] + 2*y[3]*y[5] + 
+                2*y[10]*y[6] + 2*y[2]*y[6] + 2*y[9]*y[7] + 2*y[1]*y[7] + 2*y[5]*y[7] + 2*y[11]*y[13] - 2*my*y[13] + 
+                2*y[3]*y[13] + 2*y[7]*y[13] + 2*y[10]*y[14] + 2*y[2]*y[14] + 2*y[6]*y[14] + 2*y[9]*y[15] + 
+                2*y[1]*y[15] + 2*y[5]*y[15] + 2*y[13]*y[15]);
+    
+    double f =  1*(2*x[10]*x[11] - 2*x[10]*mx + 2*x[11]*x[2] - 2*mx*x[2] + 2*x[10]*x[3] + 2*x[2]*x[3] + 
+                2*x[11]*x[6] - 2*mx*x[6] + 2*x[3]*x[6] + 2*x[10]*x[7] + 2*x[2]*x[7] + 2*x[6]*x[7] + 
+                2*x[11]*x[14] - 2*mx*x[14] + 2*x[3]*x[14] + 2*x[7]*x[14] + 2*x[10]*x[15] + 2*x[2]*x[15] + 
+                2*x[6]*x[15] + 2*x[14]*x[15]);
+    
+    f +=        1*(2*y[10]*y[11] - 2*y[10]*my + 2*y[11]*y[2] - 2*my*y[2] + 2*y[10]*y[3] + 2*y[2]*y[3] + 
+                2*y[11]*y[6] - 2*my*y[6] + 2*y[3]*y[6] + 2*y[10]*y[7] + 2*y[2]*y[7] + 2*y[6]*y[7] + 
+                2*y[11]*y[14] - 2*my*y[14] + 2*y[3]*y[14] + 2*y[7]*y[14] + 2*y[10]*y[15] + 2*y[2]*y[15] + 
+                2*y[6]*y[15] + 2*y[14]*y[15]);
+    
+    int degree = 5;
+    double coef[6] = {a,b,c,d,e,f};
+    
+    //std::cout << "polinomio:\n";
+    //printf("%f %f %f %f %f %f\n", a,b,c,d,e,f);
+   
+    // compute roots
+    JenkinsTraubAlg jkAlg(degree,coef);
+    jkAlg.computeRoots();
+    const double* rcoef = jkAlg.getZerosR();
+    const double* icoef = jkAlg.getZerosI();
+    
+    double dmin = 1000;
+    double value;
+    tmin = -1;
             
-        }    
-        plot.push_back(Point(x_t,y_t));
-    }    
+    for (int i=0; i<degree; i++){
+        //curve is only valid for t in [0,1]
+        //std::cout << "root: " << rcoef[i] << " + " << icoef[i] << "i\n";
+        if (icoef[i]!=0 || rcoef[i]<0 || rcoef[i]>1) continue;
+        if ((value = computeCurvePointAt(rcoef[i]).DistanceSquared(p)) < dmin){
+            dmin = value;
+            tmin = rcoef[i];
+        }
+    }
     
+    return dmin;
 }
 
-/*
-    1 = 6*(x9*x9 +x1*x1 +x5*x5 +x13*x13+ 2*x9*x1 + 2*x9*x5 + 2*x1*x5 + 2*x9*x13 + 2*x1*x13 +2*x5*x13);
-
-2 = 5*(2*x9*x10 + 2*x10*x1 + 2*x9*x2 + 2*x1*x2 + 2*x10*x5 + 2*x2*x5 + 2*x9*x6 + 2*x1*x6 + 2*x5*x6 +2*x10*x13 + 2*x2*x13 + 2*x6*x13 + 2*x9*x14 + 2*x1*x14 + 2*x5*x14 + 2*x13*x14);
-
-3 = 4*(x10*x10 + x2*x2 + x6*x6 + x14*x14 + 2*x9*x11 + 2*x11*x1 + 2*x10*x2 + 2*x9*x3 + 2*x1*x3 + 2*x11*x5 + 2*x3*x5 + 2*x10*x6 + 2*x2*x6 + 2*x9*x7 + 2*x1*x7 + 2*x5*x7 + 2*x11*x13 + 2*x3*x13 + 2*x7*x13 + 2*x10*x14 + 2*x2*x14 + 2*x6*x14 + 2*x9*x15 + 2*x1*x15 + 2*x5*x15 + 2*x13*x15 );
-
-4 = 3*(2*x10*x11 + 2*x9*x12 - 2*x9*mx + 2*x12*x1 - 2*mx*x1 + 2*x11*x2 + 2*x10*x3 + 2*x2*x3 + 2*x9*x4 + 2*x1*x4 + 2*x12*x5 - 2*mx*x5 + 2*x4*x5 + 2*x11*x6 + 2*x3*x6 + 2*x10*x7 + 2*x2*x7 + 2*x6*x7 + 2*x9*x8 + 2*x1*x8 + 2*x5*x8 + 2*x12*x13 - 2*mx*x13 + 2*x4*x13 + 2*x8*x13 + 2*x11*x14 + 2*x3*x14 + 2*x7*x14 + 2*x10*x15 + 2*x2*x15 + 2*x6*x15 + 2*x14*x15 + 2*x9*x16 + 2*x1*x16 + 2*x5*x16 + 2*x13*x16);
-
-5 = 2*(x11*x11 + x3*x3 + x7*x7 + x15*x15 + 2*x10*x12 - 2*x10*mx + 2*x12*x2 - 2*mx*x2 + 2*x11*x3 + 2*x10*x4 + 2*x2*x4 + 2*x12*x6 - 2*mx*x6 + 2*x4*x6 + 2*x11*x7 + 2*x3*x7 + 2*x10*x8 + 2*x2*x8 + 2*x6*x8 + 2*x12*x14 - 2*mx*x14 + 2*x4*x14 + 2*x8*x14 + 2*x11*x15 + 2*x3*x15 + 2*x7*x15 + 2*x10*x16 + 2*x2*x16 + 2*x6*x16 + 2*x14*x16);
-
-6 = 1*(2*x11*x12 - 2*x11*mx + 2*x12*x3 - 2*mx*x3 + 2*x11*x4 + 2*x3*x4 + 2*x12*x7 - 2*mx*x7 + 2*x4*x7 + 2*x11*x8 + 2*x3*x8 + 2*x7*x8 + 2*x12*x15 - 2*mx*x15 + 2*x4*x15 + 2*x8*x15 + 2*x11*x16 + 2*x3*x16 + 2*x7*x16 + 2*x15*x16);
-}
-*/
 
 void customCurve::printMatrix(){
-    matBasis.printMatrix();
+    std::cout << "[";
+    for (int i=0; i<MSIZE*MSIZE; i++){
+        if (i%MSIZE == 0) std::cout << "; ";
+        std::cout << a[i] << " ";
+    }
+    std::cout << "]\n";
 }
 

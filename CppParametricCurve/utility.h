@@ -11,7 +11,7 @@
 #include <GL/glut.h>
 #include <math.h>
 
-typedef enum { PT_POINT, PT_TANGENT } POINT_TYPE;
+
 //==================== STRUCTS ================================ //
 struct Point {
     Point() : x(0),y(0){}
@@ -30,22 +30,31 @@ struct Point {
 };
 
 struct Basis {
+    //true --> point
+    //false --> tangent
     Basis(){
         coef[0]=0; coef[1]=0;  coef[2]=0; coef[3]=0;
-        p_or_t[0]=PT_POINT; p_or_t[1]=PT_POINT; p_or_t[2]=PT_POINT; p_or_t[3]=PT_POINT;
+        p_or_t[0]=true; p_or_t[1]=true; p_or_t[2]=true; p_or_t[3]=true;
+        fixed[0]=true; fixed[1]=true; fixed[2]=false; fixed[3]=false;
     }
     Basis(float p1, float p2, float p3, float p4){
         coef[0]=p1; coef[1]=p2;  coef[2]=p3; coef[3]=p4;
-        p_or_t[0]=PT_POINT; p_or_t[1]=PT_POINT; p_or_t[2]=PT_POINT; p_or_t[3]=PT_POINT;
+        p_or_t[0]=true; p_or_t[1]=true; p_or_t[2]=true; p_or_t[3]=true;
+        fixed[0]=true; fixed[1]=true; fixed[2]=false; fixed[3]=false;
     }
     void setBasis(float p1, float p2, float p3, float p4){
         coef[0]=p1; coef[1]=p2;  coef[2]=p3; coef[3]=p4;
     }
-    void setPointTypes(POINT_TYPE p1, POINT_TYPE p2, POINT_TYPE p3, POINT_TYPE p4){
+    void setPointTypes(bool p1, bool p2, bool p3, bool p4){
         p_or_t[0]=p1; p_or_t[1]=p2; p_or_t[2]=p3; p_or_t[3]=p4;
     }
+    void setFixedPoints(bool v1, bool v2, bool v3, bool v4){
+        fixed[0]=v1; fixed[1]=v2; fixed[2]=v3; fixed[3]=v4;
+    }
+    
     float coef[4];
-    POINT_TYPE p_or_t[4];    
+    bool p_or_t[4];
+    bool fixed[4];
 };
 
 struct BoundingBox {

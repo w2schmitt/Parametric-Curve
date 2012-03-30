@@ -149,7 +149,7 @@ template <class D> class matrix{
     return true;
     };
     
-    void invert2() {
+    void invert() {
     /* This function calculates the inverse of a square matrix
      *
      * matrix_inverse(double *Min, double *Mout, int actualsize)
@@ -236,53 +236,105 @@ template <class D> class matrix{
         }
     }
 }
+
+    double determinant(){
+        D **a = NULL ;
+        a = (D **) malloc(actualsize* sizeof(D *)) ;
+
+        for (int i = 0 ; i < actualsize ; i++)
+            a[i] = (D *) malloc(actualsize* sizeof(D)) ;
+
+        D value;
+        bool success;
+        for (int i = 0 ; i < actualsize ; i++){
+            for (int j = 0; j < actualsize; j++){
+                getvalue(i,j,value,success);
+                a[i][j] = value;
+            }
+        }
+        
+        double det = _determinant(a,actualsize);
+        
+        for (int i = 0 ; i < actualsize ; i++) free(a[i]);
+        free(a);
+        // compute determinant recursively
+        return det;
+    }
+
+    double _determinant(D **a, int n)
+    {
+        int i,j,j1,j2 ;                    // general loop and matrix subscripts
+        double det = 0 ;                   // init determinant
+        D **m = NULL ;                // pointer to pointers to implement 2d
+       
+        // square array
+        
+
+        if (n < 1)    {   }                // error condition, should never get here
+
+        else if (n == 1) {                 // should not get here
+            det = a[0][0] ;
+            }
+
+        else if (n == 2)  {                // basic 2X2 sub-matrix determinate
+                                        // definition. When n==2, this ends the
+            det = a[0][0] * a[1][1] - a[1][0] * a[0][1] ;// the recursion series
+            }
+
+
+                                        // recursion continues, solve next sub-matrix
+        else {                             // solve the next minor by building a
+                                        // sub matrix
+            det = 0 ;                      // initialize determinant of sub-matrix
+
+                                            // for each column in sub-matrix
+            for (j1 = 0 ; j1 < n ; j1++) {
+                                            // get space for the pointer list
+                m = (D **) malloc((n-1)* sizeof(D *)) ;
+
+                for (i = 0 ; i < n-1 ; i++)
+                    m[i] = (D *) malloc((n-1)* sizeof(D)) ;
+                        //     i[0][1][2][3]  first malloc
+                        //  m -> +  +  +  +   space for 4 pointers
+                        //       |  |  |  |          j  second malloc
+                        //       |  |  |  +-> _ _ _ [0] pointers to
+                        //       |  |  +----> _ _ _ [1] and memory for
+                        //       |  +-------> _ a _ [2] 4 doubles
+                        //       +----------> _ _ _ [3]
+                        //
+                        //                   a[1][2]
+                        // build sub-matrix with minor elements excluded
+                for (i = 1 ; i < n ; i++) {
+                    j2 = 0 ;               // start at first sum-matrix column position
+                                        // loop to copy source matrix less one column
+                    for (j = 0 ; j < n ; j++) {
+                        if (j == j1) continue ; // don't copy the minor column element
+
+                        m[i-1][j2] = a[i][j] ;  // copy source element into new sub-matrix
+                                                // i-1 because new sub-matrix is one row
+                                                // (and column) smaller with excluded minors
+                        j2++ ;                  // move to next sub-matrix column position
+                        }
+                    }
+
+                det += pow(-1.0,1.0 + j1 + 1.0) * a[0][j1] * _determinant(m,n-1) ;
+                                                // sum x raised to y power
+                                                // recursively get determinant of next
+                                                // sub-matrix which is now one
+                                                // row & column smaller
+
+                for (i = 0 ; i < n-1 ; i++) {free(m[i]);}// free the storage allocated to
+                                                // to this minor's set of pointers
+                free(m) ;                       // free the storage for the original
+                                               // pointer to pointer
+            }
+        }
+        return(det) ;
+    }
     
-  void invert()  {
-    if (actualsize <= 0) return;  // sanity check
-    if (actualsize == 1) return;  // must be of dimension >= 2
-    for (int i=1; i < actualsize; i++) data[i] /= data[0]; // normalize row 0
-    for (int i=1; i < actualsize; i++)  { 
-      for (int j=i; j < actualsize; j++)  { // do a column of L
-        D sum = 0.0;
-        for (int k = 0; k < i; k++)  
-            sum += data[j*maxsize+k] * data[k*maxsize+i];
-        data[j*maxsize+i] -= sum;
-        }
-      if (i == actualsize-1) continue;
-      for (int j=i+1; j < actualsize; j++)  {  // do a row of U
-        D sum = 0.0;
-        for (int k = 0; k < i; k++)
-            sum += data[i*maxsize+k]*data[k*maxsize+j];
-        data[i*maxsize+j] = 
-           (data[i*maxsize+j]-sum) / data[i*maxsize+i];
-        }
-      }
-    for ( int i = 0; i < actualsize; i++ )  // invert L
-      for ( int j = i; j < actualsize; j++ )  {
-        D x = 1.0;
-        if ( i != j ) {
-          x = 0.0;
-          for ( int k = i; k < j; k++ ) 
-              x -= data[j*maxsize+k]*data[k*maxsize+i];
-          }
-        data[j*maxsize+i] = x / data[j*maxsize+j];
-        }
-    for ( int i = 0; i < actualsize; i++ )   // invert U
-      for ( int j = i; j < actualsize; j++ )  {
-        if ( i == j ) continue;
-        D sum = 0.0;
-        for ( int k = i; k < j; k++ )
-            sum += data[k*maxsize+j]*( (i==k) ? 1.0 : data[i*maxsize+k] );
-        data[i*maxsize+j] = -sum;
-        }
-    for ( int i = 0; i < actualsize; i++ )   // final inversion
-      for ( int j = 0; j < actualsize; j++ )  {
-        D sum = 0.0;
-        for ( int k = ((i>j)?i:j); k < actualsize; k++ )  
-            sum += ((j==k)?1.0:data[j*maxsize+k])*data[k*maxsize+i];
-        data[j*maxsize+i] = sum;
-        }
-    };
+    
+
 };
+
 #endif
 
