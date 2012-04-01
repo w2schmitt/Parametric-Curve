@@ -28,17 +28,18 @@ void mouseFunc(int button, int state, int x, int y){
             if (!paramCurve.insertControlPoint(userPoint))
             {
                 //test for grab curve
-                if (paramCurve.computeMinDistanceFromPointToCurve(userPoint, minT) < SPACE_SIZE*0.5){
-                    grabCurve = true;
+                if (paramCurve.computeMinDistanceFromPointToCurve(userPoint, minT) < SPACE_SIZE*0.5){                    
+                    if (minT > 0.025 && minT < 0.975)
+                        grabCurve = true;
                 }
-                else{
-                    //test for grab control points
-                    for (int i=0; i < paramCurve.getControlPoints().size(); i++)
-                        if (userPoint.Distance(paramCurve.getControlPoints().at(i)) < SPACE_SIZE*0.5/10.){
-                            grabPoint[i] = true;
-                            grabCurve = false;
-                        }
-                }
+                
+                //test for grab control points
+                for (int i=0; i < paramCurve.getControlPoints().size(); i++)
+                    if (userPoint.Distance(paramCurve.getControlPoints().at(i)) < SPACE_SIZE*0.5/10.){
+                        grabPoint[i] = true;
+                        grabCurve = false;
+                    }
+                
             }
             
         }
@@ -59,11 +60,9 @@ void motionFunc(int x, int y){
             for (int i=0; i<paramCurve.getControlPoints().size(); i++){
                 if (grabPoint[i]){
                     paramCurve.insertControlPointAt(userPoint,i);
-                    //paramCurve.computeBezierCurve();
                 }
             }        
         }
-        //glutPostRedisplay(); 
     }
 }
 
@@ -88,6 +87,7 @@ void reshape(int w, int h){
     win.x = w;
     win.y = h;
     
+    // keep aspect ratio
     space2d.left  = -SPACE_SIZE*ratio;
     space2d.right = SPACE_SIZE*ratio;
 
@@ -202,7 +202,7 @@ void twGUI(TwBar *bar){
     TwAddVarRW(bar, "p4fix", TW_TYPE_BOOLCPP, paramCurve.basis.fixed+3,"true='locked' false='free' label='p4' group='Curve Config'");
     
     TwAddVarRO(bar,"Determinant",TW_TYPE_DOUBLE, &(paramCurve.determinant) , "group='Settings'");
-    TwAddVarCB(bar, "seg", TW_TYPE_INT16, customCurve::setNumberOfSegments,customCurve::getNumberOfSegments, &paramCurve,"min=2 max=100 step=2 keyincr='+' keydecr='-' label='Segments' group='Settings'");
+    TwAddVarCB(bar, "seg", TW_TYPE_INT32, customCurve::setNumberOfSegments,customCurve::getNumberOfSegments, &paramCurve,"min=2 max=100 step=2 keyincr='+' keydecr='-' label='Segments' group='Settings'");
     
     TwAddSeparator(bar,NULL,NULL);
     TwAddButton(bar,"update", updateBasis, (void*)&paramCurve.basis, "label='Update Values'");

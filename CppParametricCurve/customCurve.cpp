@@ -95,10 +95,12 @@ void customCurve::createBasis(Basis b){
                 break;
         }
     }
-    
+    double err = 0.000001; 
     determinant = matBasis.determinant();
     
-    if (determinant==0){
+    // determinant == 0
+    if (abs(determinant) < err){
+        determinant = 0;
         plot.clear();
         return;
     }
@@ -118,7 +120,7 @@ void customCurve::createBasis(Basis b){
     matBasis.getvalue(2,2,a[10],ok); matBasis.getvalue(3,2,a[14],ok);
     matBasis.getvalue(2,3,a[11],ok); matBasis.getvalue(3,3,a[15],ok);
     
-    double err = 0.0001;    
+       
     // set very small values to Zero  
     for (int i=0; i<MSIZE*MSIZE; i++)
         if ( abs(a[i]) < err) a[i]=0;
