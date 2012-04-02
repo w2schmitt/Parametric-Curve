@@ -1,46 +1,90 @@
-Tutorial GIT:
+-- FIRST ASSIGNMENT -- PARAMETRIC CURVES --
 
- * Criar usuário em http://github.com
- * Seguir passos de instalação em http://help.github.com/set-up-git-redirect
- * Executar os comandos a seguir:
-  $ git clone git://github.com/w2schmitt/Parametric-Curve.git
-  $ cd CppParametricCurve
-  $ git remote add origin git@github.com:w2schmitt/Parametric-Curve.git
- * Para atualizar para a mais nova versão:
-  $ git pull
- * Para adicionar um novo arquivo:
-  $ touch arquivo
-  $ git add arquivo
- * Quando tiver realizado alterações e decidir mantê-las:
-  $ make clean
-  $ git commit -a -m "breve descrição das suas modificações"
- Para enviar as mudanças ao servidor:
-  $ git push --all origin
- * O link para o projeto é: https://github.com/w2schmitt/Parametric-Curve
+Name:  Wagner Schmitt
+UFRGS: 159824
+
+1. BUILD:
+The program binary was built in Ubuntu x64. To build it again the user needs to browse the main directory where the makefile is located, and type make.
+
+---------------------------------------------------------- // -------------------------------------------------------
+
+2. USING THE PROGRAM: CONDITIONS
+As soon as the program starts to run, the user will be presented with a black screen with a floating menu. This menu is where the user can input his own basis aside from define some other settings. 
+
+2.1. == <** USER BASIS **>
+The program starts with a default basis defining a Hermite Curve. After the user change any configuration in the menu, HE SHOULD CLICK [[UPDATE CHANGES]] TO APPLY THE CHANGES.
+If the basis defined by the user wasn't define a basis (the determinant of the basis matrix equals to zero), no curve will be drawn, and the menu field 'determinant' will be displayed zero (determinant = 0).
+
+2.1. == <** POINTS **>
+Next, the user should provide four points p1,p2,p3 and p4, by clicking in diferents position on the screen. As soon he provide the points, a curve will be drawed. After that point, the user can interact with the control points or the curve itself.
+
+---------------------------------------------------------- // -------------------------------------------------------
+
+3. BASIS DERIVATION:
+
+The user can build its own basis provinding values for P1,P2,P3,P4, in [0,1]. Also, he defines witch is a POINT or a TANGENT. 
+
+Assuming the user specified the four points P1,P2,P3,P4:
+P1(t1) = a(t1)^3 + b(t1)^2 + c(t1) + d;
+P2(t2) = a(t2)^3 + b(t2)^2 + c(t2) + d;
+P3(t3) = a(t3)^3 + b(t3)^2 + c(t3) + d;
+P4(t4) = a(t4)^3 + b(t4)^2 + c(t4) + d;
+
+So its computed:
+[ P1 ]   [ (t1)^3 (t1)^2 (t1) 1 ]   [ a ]
+[ P2 ] = [ (t2)^3 (t2)^2 (t2) 1 ] x [ b ]
+[ P3 ]   [ (t3)^3 (t3)^2 (t3) 1 ]   [ c ]
+[ P4 ]   [ (t4)^3 (t4)^2 (t4) 1 ]   [ d ] 
+
+To find the coeficients [a b c d ]^T, the basis matrix is inverted:
+					 
+[ a ]   [ (t1)^3 (t1)^2 (t1) 1 ] (-1)    [ P1 ]
+[ b ] = [ (t2)^3 (t2)^2 (t2) 1 ]      X  [ P2 ]
+[ c ]   [ (t3)^3 (t3)^2 (t3) 1 ]         [ P3 ]
+[ d ]   [ (t4)^3 (t4)^2 (t4) 1 ]         [ P4 ] 
+
+So the Basis function is :
+
+    		  	 [ (t1)^3 (t1)^2 (t1) 1 ] (-1)    [ P1x P1y ]
+Q(t) = [ t^3 t^2 t 1 ] x [ (t2)^3 (t2)^2 (t2) 1 ]      X  [ P2x P2y ]
+    		  	 [ (t3)^3 (t3)^2 (t3) 1 ]         [ P3x P3y ]
+    		  	 [ (t4)^3 (t4)^2 (t4) 1 ]         [ P4x P4y ] 
 
 
-Curva de Bezier; ---------------------------------------------------------------
+---------------------------------------------------------- // -------------------------------------------------------
 
-x(t) = (1-t)*x0 + 3*(1-t)^2*t*x1 + 3*(1-t)*t*t*x2 + t*t*t*x3, t in [0,1]
-y(t) = (1-t)*y0 + 3*(1-t)^2*t*y1 + 3*(1-t)*t*t*y2 + t*t*t*y3, t in [0,1]
+4. MINIMUM DISTANCE FROM POINT TO THE PARAMETRIC CURVE
 
-achar a distância entre os dois pontos P(a,b) e P(x(t),y(t),z(t)).
+Assuming a parametric curve Q(t) = ( X(t) Y(t) )
 
-D(t)^2 = (x(t)-a)^2 + (y(t)-b)^2
+the curve will produce the points P( X(t), Y(t) ) from t varying in [0,1].
 
-temos que achar o ponto t que minimize D^2. Isso pode ser feito achando os pontos críticos de D'(t)^2 = 0.
-Então os pontos críticos são testados na função e é visto qual o menor valor.
+So the distance from an arbitrary point P( Px, Py ) to any point P( X(t), Y(t) ) is given by:
 
-D(t_critico) = valor1
-D(t_critico2) = valor2 
+	D(t)^2 =  (X(t)-Px)^2 + (Y(t)-Py)^2
 
+Since, D is in function of 't', we want to find the values of t wich minimizes D.
 
-wolfram alpha :
- derive (( ((1-t)^3)*1 + 3*((1-t)^2)*t*2 + 3*(1-t)*(t^2)*7 + (t^3)*8) - 2)^2 +(( ((1-t)^3)*1 + 3*((1-t)^2)*t*2 + 3*(1-t)*(t^2)*7 + (t^3)*8) - 3)^2 in t
-
-( ((1-t)^3)*1 + 3*((1-t)^2)*t*2 + 3*(1-t)*(t^2)*7 + (t^3)*8)
+	Minimize D(t)^2 = (X(t)-Px)^2 + (Y(t)-Py)^2
+	  Such as: t in [0,1]
 
 
+To solve this we have to find the critical points where D'(t) = 0.
+and test wich of the values of t gives the minimum distance in D(t).
+
+Obs: This will produce a polynomium of degree 5, so it will have 5 critical points.  
+
+---------------------------------------------------------- // -------------------------------------------------------
+
+5. CODE FROM OTHER SOURCES
+
+5.1 - JERKINS-TRAUB NUMERICAL ALGORITHM TO FIND ROOTS OF POLINOMIUM OF ANY DEGREE: 
+	It was used the method of Jenkins-Traub to find the roots of the polynomium of 5 dregree. The algoritm was modified to fulfill the needs of the program.
+	Source Code: http://www.akiti.ca/rpoly_ak1_Intro.html
+
+5.2 - ALGORITHM FOR COMPUTING THE DETERMINANT AND INVERSE OF A MATRIX:
+	Written by Mike Dinolfo.	
+	Source Code: users.erols.com/mdinolfo/matrix.htm
 
 
 
